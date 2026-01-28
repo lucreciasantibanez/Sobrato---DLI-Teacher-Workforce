@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>California Bilingual Teacher Preparation & DLI Programs Map</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // California outline - actual geographic coordinates [lon, lat]
+        // Traced from northwest corner clockwise
+        const californiaCoords = [
+            // Northern border with Oregon
+            [-124.21, 42.00], [-123.62, 42.00], [-122.29, 42.00], [-121.44, 42.00], [-120.00, 42.00],
+            // Eastern border with Nevada (north)
+            [-120.00, 41.99], [-120.00, 41.20], [-120.00, 40.50], [-120.00, 39.72], [-120.00, 39.00],
+            // Jog at Lake Tahoe area
+            [-120.00, 39.00], [-119.99, 38.93], [-119.90, 38.92], [-119.59, 38.71],
+            [-119.32, 38.53], [-119.15, 38.41], [-118.43, 38.04], [-118.20, 37.78],
+            [-117.83, 37.46], [-117.63, 37.13], [-117.17, 36.97],
+            [-116.93, 36.76], [-116.38, 36.37], [-115.90, 36.00], [-115.65, 35.80],
+            [-115.39, 35.53], [-115.11, 35.43], [-114.63, 35.11], [-114.63, 35.00],
+            // Colorado River border with Arizona
+            [-114.63, 35.00], [-114.58, 34.83], [-114.47, 34.66], [-114.38, 34.46],
+            [-114.14, 34.26], [-114.43, 34.08], [-114.52, 33.82], [-114.52, 33.55],
+            [-114.72, 33.40], [-114.50, 33.02], [-114.46, 32.84], [-114.72, 32.72],
+            // Southern border with Mexico
+            [-114.72, 32.72], [-115.47, 32.67], [-117.12, 32.54],
+            // Pacific Coast - San Diego north
+            [-117.12, 32.54], [-117.13, 32.67], [-117.25, 32.80], [-117.28, 33.05],
+            [-117.36, 33.17], [-117.47, 33.30], [-117.60, 33.43],
+            // Orange County / LA coast
+            [-117.93, 33.62], [-118.11, 33.75], [-118.41, 33.74], [-118.52, 33.82],
+            [-118.56, 34.04],
+            // Santa Monica Bay, Point Dume
+            [-118.81, 34.02], [-119.04, 34.05], [-119.27, 34.24],
+            // Santa Barbara Channel
+            [-119.60, 34.42], [-119.88, 34.41], [-120.05, 34.46], [-120.47, 34.45],
+            [-120.65, 34.58],
+            // Point Conception, heading north
+            [-120.67, 34.77], [-120.85, 35.18], [-121.29, 35.67], [-121.49, 35.97],
+            // Big Sur Coast
+            [-121.79, 36.25], [-121.90, 36.50], [-121.95, 36.64],
+            // Monterey Bay
+            [-121.95, 36.80], [-121.79, 36.80], [-121.91, 36.97],
+            // Santa Cruz, north to SF
+            [-122.08, 37.05], [-122.39, 37.25], [-122.42, 37.49],
+            // San Francisco Bay entrance
+            [-122.50, 37.52], [-122.52, 37.79], [-122.39, 37.81],
+            // North of SF, Marin
+            [-122.48, 37.87], [-122.52, 37.95], [-122.70, 38.00],
+            // Point Reyes
+            [-122.97, 38.03], [-122.99, 38.24], [-123.02, 38.30],
+            // Bodega Bay north
+            [-123.10, 38.45], [-123.33, 38.57], [-123.44, 38.72],
+            [-123.69, 38.91], [-123.73, 39.12], [-123.78, 39.35],
+            // Mendocino coast
+            [-123.78, 39.55], [-123.82, 39.77], [-123.85, 39.93],
+            // Cape Mendocino (westernmost)
+            [-124.36, 40.26], [-124.31, 40.50], [-124.20, 40.78],
+            [-124.21, 41.00], [-124.14, 41.15], [-124.07, 41.47],
+            [-124.15, 41.73], [-124.25, 41.93],
+            // Back to start
+            [-124.21, 42.00]
+        ];
+
+        // BILA Teacher Preparation Programs
+        const bilaData = [
+            {"name": "Alder Graduate School of Education", "city": "Redwood City", "lat": 37.4852, "lon": -122.2364, "segment": "Private/Independent Institution"},
+            {"name": "Alliant International University", "city": "San Diego", "lat": 32.7157, "lon": -117.1611, "segment": "Private/Independent Institution"},
+            {"name": "Biola University", "city": "La Mirada", "lat": 33.9172, "lon": -118.012, "segment": "Private/Independent Institution"},
+            {"name": "California Baptist University", "city": "Riverside", "lat": 33.9533, "lon": -117.3962, "segment": "Private/Independent Institution"},
+            {"name": "California Lutheran University", "city": "Thousand Oaks", "lat": 34.1706, "lon": -118.8376, "segment": "Private/Independent Institution"},
+            {"name": "Cal Poly San Luis Obispo", "city": "San Luis Obispo", "lat": 35.2828, "lon": -120.6596, "segment": "California State University"},
+            {"name": "Cal Poly Pomona", "city": "Pomona", "lat": 34.0551, "lon": -117.75, "segment": "California State University"},
+            {"name": "CSU Bakersfield", "city": "Bakersfield", "lat": 35.3733, "lon": -119.0187, "segment": "California State University"},
+            {"name": "CSU Channel Islands", "city": "Camarillo", "lat": 34.2164, "lon": -119.0376, "segment": "California State University"},
+            {"name": "CSU Chico", "city": "Chico", "lat": 39.7285, "lon": -121.8375, "segment": "California State University"},
+            {"name": "CSU Dominguez Hills", "city": "Carson", "lat": 33.8314, "lon": -118.282, "segment": "California State University"},
+            {"name": "CSU Fresno", "city": "Fresno", "lat": 36.7378, "lon": -119.7871, "segment": "California State University"},
+            {"name": "CSU Fullerton", "city": "Fullerton", "lat": 33.8704, "lon": -117.9242, "segment": "California State University"},
+            {"name": "CSU Long Beach", "city": "Long Beach", "lat": 33.7701, "lon": -118.1937, "segment": "California State University"},
+            {"name": "CSU Los Angeles", "city": "Los Angeles", "lat": 34.0522, "lon": -118.2437, "segment": "California State University"},
+            {"name": "CSU Monterey Bay", "city": "Seaside", "lat": 36.6108, "lon": -121.8514, "segment": "California State University"},
+            {"name": "CSU Northridge", "city": "Northridge", "lat": 34.2283, "lon": -118.5369, "segment": "California State University"},
+            {"name": "CSU Sacramento", "city": "Sacramento", "lat": 38.5816, "lon": -121.4944, "segment": "California State University"},
+            {"name": "CSU San Bernardino", "city": "San Bernardino", "lat": 34.1083, "lon": -117.2898, "segment": "California State University"},
+            {"name": "CSU San Marcos", "city": "San Marcos", "lat": 33.1434, "lon": -117.1661, "segment": "California State University"},
+            {"name": "CSU Stanislaus", "city": "Turlock", "lat": 37.4947, "lon": -120.8466, "segment": "California State University"},
+            {"name": "Fresno Pacific University", "city": "Fresno", "lat": 36.7378, "lon": -119.7871, "segment": "Private/Independent Institution"},
+            {"name": "LAUSD", "city": "Los Angeles", "lat": 34.0522, "lon": -118.2437, "segment": "Local Education Agency"},
+            {"name": "Loyola Marymount University", "city": "Los Angeles", "lat": 34.0522, "lon": -118.2437, "segment": "Private/Independent Institution"},
+            {"name": "National University", "city": "San Diego", "lat": 32.7157, "lon": -117.1611, "segment": "Private/Independent Institution"},
+            {"name": "Pacific Oaks College", "city": "Pasadena", "lat": 34.1478, "lon": -118.1445, "segment": "Private/Independent Institution"},
+            {"name": "Riverside County Office of Ed", "city": "Riverside", "lat": 33.9533, "lon": -117.3962, "segment": "Local Education Agency"},
+            {"name": "San Diego State University", "city": "San Diego", "lat": 32.7157, "lon": -117.1611, "segment": "California State University"},
+            {"name": "San Francisco State University", "city": "San Francisco", "lat": 37.7749, "lon": -122.4194, "segment": "California State University"},
+            {"name": "San Jose State University", "city": "San Jose", "lat": 37.3382, "lon": -121.8863, "segment": "California State University"},
+            {"name": "Santa Barbara County Ed Office", "city": "Santa Barbara", "lat": 34.4208, "lon": -119.6982, "segment": "Local Education Agency"},
+            {"name": "Santa Clara University", "city": "Santa Clara", "lat": 37.3541, "lon": -121.9552, "segment": "Private/Independent Institution"},
+            {"name": "Sonoma State University", "city": "Rohnert Park", "lat": 38.3396, "lon": -122.7011, "segment": "California State University"},
+            {"name": "St. Mary's College", "city": "Moraga", "lat": 37.8349, "lon": -122.1297, "segment": "Private/Independent Institution"},
+            {"name": "Stanford University", "city": "Stanford", "lat": 37.4275, "lon": -122.1697, "segment": "Private/Independent Institution"},
+            {"name": "UC Berkeley", "city": "Berkeley", "lat": 37.8716, "lon": -122.2727, "segment": "University Of California"},
+            {"name": "UC Davis", "city": "Davis", "lat": 38.5449, "lon": -121.7405, "segment": "University Of California"},
+            {"name": "UCLA", "city": "Los Angeles", "lat": 34.0522, "lon": -118.2437, "segment": "University Of California"},
+            {"name": "UC Merced", "city": "Merced", "lat": 37.3022, "lon": -120.483, "segment": "University Of California"},
+            {"name": "UC Riverside", "city": "Riverside", "lat": 33.9533, "lon": -117.3962, "segment": "University Of California"},
+            {"name": "UC San Diego", "city": "La Jolla", "lat": 32.8328, "lon": -117.2713, "segment": "University Of California"},
+            {"name": "UC Santa Barbara", "city": "Santa Barbara", "lat": 34.4208, "lon": -119.6982, "segment": "University Of California"},
+            {"name": "UC Santa Cruz", "city": "Santa Cruz", "lat": 36.9741, "lon": -122.0308, "segment": "University Of California"},
+            {"name": "University of La Verne", "city": "La Verne", "lat": 34.1008, "lon": -117.7678, "segment": "Private/Independent Institution"},
+            {"name": "UMass Global", "city": "Aliso Viejo", "lat": 33.565, "lon": -117.7264, "segment": "Private/Independent Institution"},
+            {"name": "University of San Francisco", "city": "San Francisco", "lat": 37.7749, "lon": -122.4194, "segment": "Private/Independent Institution"},
+            {"name": "USC", "city": "Los Angeles", "lat": 34.0522, "lon": -118.2437, "segment": "Private/Independent Institution"}
+        ];
+
+        // DLI Programs by City
+        const dliData = [
+            {"city": "Anaheim", "count": 42, "lat": 33.8366, "lon": -117.9143},
+            {"city": "Antioch", "count": 4, "lat": 38.0049, "lon": -121.8058},
+            {"city": "Bakersfield", "count": 5, "lat": 35.3733, "lon": -119.0187},
+            {"city": "Baldwin Park", "count": 10, "lat": 34.0855, "lon": -117.9611},
+            {"city": "Berkeley", "count": 2, "lat": 37.8716, "lon": -122.2727},
+            {"city": "Burbank", "count": 3, "lat": 34.1808, "lon": -118.309},
+            {"city": "Calexico", "count": 1, "lat": 32.6789, "lon": -115.4989},
+            {"city": "Carson", "count": 3, "lat": 33.8314, "lon": -118.282},
+            {"city": "Castro Valley", "count": 1, "lat": 37.6941, "lon": -122.0864},
+            {"city": "Chico", "count": 3, "lat": 39.7285, "lon": -121.8375},
+            {"city": "Chula Vista", "count": 25, "lat": 32.6401, "lon": -117.0842},
+            {"city": "Compton", "count": 3, "lat": 33.8958, "lon": -118.2201},
+            {"city": "Concord", "count": 5, "lat": 37.978, "lon": -122.0311},
+            {"city": "Corona", "count": 8, "lat": 33.8753, "lon": -117.5664},
+            {"city": "Costa Mesa", "count": 3, "lat": 33.6411, "lon": -117.9187},
+            {"city": "Davis", "count": 4, "lat": 38.5449, "lon": -121.7405},
+            {"city": "Downey", "count": 3, "lat": 33.9401, "lon": -118.1332},
+            {"city": "El Cajon", "count": 2, "lat": 32.7948, "lon": -116.9625},
+            {"city": "El Centro", "count": 6, "lat": 32.792, "lon": -115.5631},
+            {"city": "El Monte", "count": 4, "lat": 34.0686, "lon": -118.0276},
+            {"city": "Escondido", "count": 5, "lat": 33.1192, "lon": -117.0864},
+            {"city": "Fairfield", "count": 2, "lat": 38.2494, "lon": -122.04},
+            {"city": "Fontana", "count": 4, "lat": 34.0922, "lon": -117.435},
+            {"city": "Fremont", "count": 4, "lat": 37.5485, "lon": -121.9886},
+            {"city": "Fresno", "count": 31, "lat": 36.7378, "lon": -119.7871},
+            {"city": "Fullerton", "count": 4, "lat": 33.8704, "lon": -117.9242},
+            {"city": "Glendale", "count": 12, "lat": 34.1425, "lon": -118.2551},
+            {"city": "Hawthorne", "count": 2, "lat": 33.9164, "lon": -118.3526},
+            {"city": "Hayward", "count": 16, "lat": 37.6688, "lon": -122.0808},
+            {"city": "Hemet", "count": 2, "lat": 33.7475, "lon": -116.9719},
+            {"city": "Huntington Beach", "count": 2, "lat": 33.6595, "lon": -117.9988},
+            {"city": "Indio", "count": 2, "lat": 33.7206, "lon": -116.2156},
+            {"city": "Inglewood", "count": 2, "lat": 33.9617, "lon": -118.3531},
+            {"city": "Jurupa Valley", "count": 8, "lat": 33.9974, "lon": -117.4856},
+            {"city": "Lake Forest", "count": 2, "lat": 33.6469, "lon": -117.6891},
+            {"city": "Lakewood", "count": 4, "lat": 33.8536, "lon": -118.134},
+            {"city": "Lancaster", "count": 1, "lat": 34.6868, "lon": -118.1542},
+            {"city": "Livermore", "count": 1, "lat": 37.6819, "lon": -121.768},
+            {"city": "Long Beach", "count": 7, "lat": 33.7701, "lon": -118.1937},
+            {"city": "Los Angeles", "count": 107, "lat": 34.0522, "lon": -118.2437},
+            {"city": "Lynwood", "count": 4, "lat": 33.9303, "lon": -118.2115},
+            {"city": "Mission Viejo", "count": 4, "lat": 33.6, "lon": -117.672},
+            {"city": "Modesto", "count": 2, "lat": 37.639, "lon": -120.9969},
+            {"city": "Moreno Valley", "count": 10, "lat": 33.9425, "lon": -117.2297},
+            {"city": "Mountain View", "count": 2, "lat": 37.3861, "lon": -122.0839},
+            {"city": "Napa", "count": 4, "lat": 38.2975, "lon": -122.2869},
+            {"city": "Newport Beach", "count": 2, "lat": 33.6189, "lon": -117.9289},
+            {"city": "Norwalk", "count": 3, "lat": 33.9022, "lon": -118.0817},
+            {"city": "Oakland", "count": 11, "lat": 37.8044, "lon": -122.2712},
+            {"city": "Oceanside", "count": 5, "lat": 33.1959, "lon": -117.3795},
+            {"city": "Ontario", "count": 2, "lat": 34.0633, "lon": -117.6509},
+            {"city": "Orange", "count": 4, "lat": 33.7879, "lon": -117.8531},
+            {"city": "Oxnard", "count": 22, "lat": 34.1975, "lon": -119.1771},
+            {"city": "Palmdale", "count": 9, "lat": 34.5794, "lon": -118.1165},
+            {"city": "Pasadena", "count": 6, "lat": 34.1478, "lon": -118.1445},
+            {"city": "Pleasanton", "count": 4, "lat": 37.6624, "lon": -121.8747},
+            {"city": "Pomona", "count": 2, "lat": 34.0551, "lon": -117.75},
+            {"city": "Redding", "count": 1, "lat": 40.5865, "lon": -122.3917},
+            {"city": "Redwood City", "count": 4, "lat": 37.4852, "lon": -122.2364},
+            {"city": "Rialto", "count": 8, "lat": 34.1064, "lon": -117.3703},
+            {"city": "Richmond", "count": 6, "lat": 37.9358, "lon": -122.3477},
+            {"city": "Riverside", "count": 18, "lat": 33.9533, "lon": -117.3962},
+            {"city": "Sacramento", "count": 10, "lat": 38.5816, "lon": -121.4944},
+            {"city": "Salinas", "count": 19, "lat": 36.6777, "lon": -121.6555},
+            {"city": "San Bernardino", "count": 24, "lat": 34.1083, "lon": -117.2898},
+            {"city": "San Diego", "count": 49, "lat": 32.7157, "lon": -117.1611},
+            {"city": "San Francisco", "count": 64, "lat": 37.7749, "lon": -122.4194},
+            {"city": "San Jose", "count": 28, "lat": 37.3382, "lon": -121.8863},
+            {"city": "San Leandro", "count": 6, "lat": 37.7249, "lon": -122.1561},
+            {"city": "San Luis Obispo", "count": 1, "lat": 35.2828, "lon": -120.6596},
+            {"city": "San Marcos", "count": 2, "lat": 33.1434, "lon": -117.1661},
+            {"city": "San Mateo", "count": 4, "lat": 37.563, "lon": -122.3255},
+            {"city": "Santa Ana", "count": 12, "lat": 33.7455, "lon": -117.8677},
+            {"city": "Santa Barbara", "count": 5, "lat": 34.4208, "lon": -119.6982},
+            {"city": "Santa Clara", "count": 1, "lat": 37.3541, "lon": -121.9552},
+            {"city": "Santa Cruz", "count": 2, "lat": 36.9741, "lon": -122.0308},
+            {"city": "Santa Maria", "count": 1, "lat": 34.953, "lon": -120.4357},
+            {"city": "Santa Monica", "count": 4, "lat": 34.0195, "lon": -118.4912},
+            {"city": "Santa Rosa", "count": 3, "lat": 38.4404, "lon": -122.7141},
+            {"city": "Seaside", "count": 1, "lat": 36.6108, "lon": -121.8514},
+            {"city": "Simi Valley", "count": 1, "lat": 34.2694, "lon": -118.7815},
+            {"city": "South Gate", "count": 10, "lat": 33.9547, "lon": -118.212},
+            {"city": "Stockton", "count": 4, "lat": 37.9577, "lon": -121.2908},
+            {"city": "Sunnyvale", "count": 2, "lat": 37.3688, "lon": -122.0363},
+            {"city": "Thousand Oaks", "count": 1, "lat": 34.1706, "lon": -118.8376},
+            {"city": "Torrance", "count": 3, "lat": 33.8358, "lon": -118.3406},
+            {"city": "Tracy", "count": 1, "lat": 37.7397, "lon": -121.4252},
+            {"city": "Turlock", "count": 5, "lat": 37.4947, "lon": -120.8466},
+            {"city": "Tustin", "count": 1, "lat": 33.7458, "lon": -117.8261},
+            {"city": "Upland", "count": 1, "lat": 34.0975, "lon": -117.6484},
+            {"city": "Vacaville", "count": 3, "lat": 38.3566, "lon": -121.9877},
+            {"city": "Vallejo", "count": 1, "lat": 38.1041, "lon": -122.2566},
+            {"city": "Ventura", "count": 12, "lat": 34.2746, "lon": -119.229},
+            {"city": "Victorville", "count": 1, "lat": 34.5362, "lon": -117.2928},
+            {"city": "Vista", "count": 3, "lat": 33.2, "lon": -117.2425},
+            {"city": "West Covina", "count": 4, "lat": 34.0686, "lon": -117.939},
+            {"city": "Westminster", "count": 2, "lat": 33.7513, "lon": -117.994},
+            {"city": "Whittier", "count": 7, "lat": 33.9792, "lon": -118.0328}
+        ];
+
+        function CaliforniaMap() {
+            const [hoveredItem, setHoveredItem] = useState(null);
+            const [showBila, setShowBila] = useState(true);
+            const [showDli, setShowDli] = useState(true);
+            const [selectedSegment, setSelectedSegment] = useState('all');
+
+            const width = 420;
+            const height = 520;
+            const padding = 15;
+            
+            // California bounds
+            const bounds = { minLat: 32.3, maxLat: 42.1, minLon: -124.5, maxLon: -114.1 };
+
+            const latLonToXY = (lat, lon) => {
+                const x = padding + ((lon - bounds.minLon) / (bounds.maxLon - bounds.minLon)) * (width - 2 * padding);
+                const y = padding + ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * (height - 2 * padding);
+                return { x, y };
+            };
+
+            // Create SVG path from coordinates
+            const californiaPath = useMemo(() => {
+                return californiaCoords.map((coord, i) => {
+                    const { x, y } = latLonToXY(coord[1], coord[0]);
+                    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+                }).join(' ') + ' Z';
+            }, []);
+
+            const filteredBila = useMemo(() => {
+                if (selectedSegment === 'all') return bilaData;
+                return bilaData.filter(b => b.segment === selectedSegment);
+            }, [selectedSegment]);
+
+            const getSegmentColor = (segment) => {
+                switch(segment) {
+                    case 'California State University': return '#1e40af';
+                    case 'University Of California': return '#dc2626';
+                    case 'Private/Independent Institution': return '#059669';
+                    case 'Local Education Agency': return '#7c3aed';
+                    default: return '#6b7280';
+                }
+            };
+
+            const getDliRadius = (count) => Math.sqrt(count) * 2.2 + 3;
+
+            const totalDli = dliData.reduce((sum, d) => sum + d.count, 0);
+
+            return (
+                <div className="p-4 bg-slate-100 min-h-screen">
+                    <h1 className="text-xl font-bold text-center mb-1 text-gray-800">
+                        California Bilingual Teacher Preparation & DLI Programs
+                    </h1>
+                    <p className="text-center text-gray-600 mb-3 text-sm">
+                        {bilaData.length} BILA programs • {totalDli} DLI schools across {dliData.length} cities
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-3 justify-center mb-4">
+                        <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-lg shadow text-sm">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={showBila} onChange={(e) => setShowBila(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                                <span className="font-medium">BILA Programs</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={showDli} onChange={(e) => setShowDli(e.target.checked)} className="w-4 h-4 accent-orange-500" />
+                                <span className="font-medium">DLI Schools</span>
+                            </label>
+                        </div>
+                        <select value={selectedSegment} onChange={(e) => setSelectedSegment(e.target.value)} className="text-sm border rounded-lg px-3 py-2 bg-white shadow">
+                            <option value="all">All BILA Types</option>
+                            <option value="California State University">CSU Only</option>
+                            <option value="University Of California">UC Only</option>
+                            <option value="Private/Independent Institution">Private Only</option>
+                            <option value="Local Education Agency">LEA Only</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-5">
+                        <div className="bg-white rounded-xl shadow-lg p-4">
+                            <svg width={width} height={height} style={{background: 'linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%)'}}>
+                                <defs>
+                                    <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#fef9c3" />
+                                        <stop offset="50%" stopColor="#fef08a" />
+                                        <stop offset="100%" stopColor="#fde047" />
+                                    </linearGradient>
+                                    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                        <feDropShadow dx="2" dy="3" stdDeviation="3" floodOpacity="0.25"/>
+                                    </filter>
+                                </defs>
+
+                                {/* California state outline */}
+                                <path
+                                    d={californiaPath}
+                                    fill="url(#landGrad)"
+                                    stroke="#78350f"
+                                    strokeWidth="1.5"
+                                    filter="url(#dropShadow)"
+                                />
+
+                                {/* San Francisco Bay (simplified) */}
+                                <ellipse 
+                                    cx={latLonToXY(37.75, -122.15).x} 
+                                    cy={latLonToXY(37.75, -122.15).y}
+                                    rx="6" ry="10"
+                                    fill="#93c5fd"
+                                />
+
+                                {/* DLI Programs */}
+                                {showDli && dliData.map((d, i) => {
+                                    const { x, y } = latLonToXY(d.lat, d.lon);
+                                    return (
+                                        <circle key={`dli-${i}`} cx={x} cy={y} r={getDliRadius(d.count)}
+                                            fill="rgba(251, 146, 60, 0.75)" stroke="#9a3412" strokeWidth="1"
+                                            style={{cursor: 'pointer'}}
+                                            onMouseEnter={() => setHoveredItem({ type: 'dli', data: d })}
+                                            onMouseLeave={() => setHoveredItem(null)}
+                                        />
+                                    );
+                                })}
+
+                                {/* BILA Programs */}
+                                {showBila && filteredBila.map((b, i) => {
+                                    const { x, y } = latLonToXY(b.lat, b.lon);
+                                    return (
+                                        <rect key={`bila-${i}`} x={x - 5} y={y - 5} width={10} height={10}
+                                            fill={getSegmentColor(b.segment)} stroke="white" strokeWidth="1.5"
+                                            style={{cursor: 'pointer'}}
+                                            transform={`rotate(45, ${x}, ${y})`}
+                                            onMouseEnter={() => setHoveredItem({ type: 'bila', data: b })}
+                                            onMouseLeave={() => setHoveredItem(null)}
+                                        />
+                                    );
+                                })}
+
+                                {/* City labels */}
+                                {[
+                                    { name: 'SF', lat: 37.77, lon: -122.42, dx: -18, dy: -8 },
+                                    { name: 'LA', lat: 34.05, lon: -118.24, dx: 12, dy: 4 },
+                                    { name: 'San Diego', lat: 32.72, lon: -117.16, dx: 10, dy: 4 },
+                                    { name: 'Sacramento', lat: 38.58, lon: -121.49, dx: 8, dy: -6 },
+                                    { name: 'Fresno', lat: 36.74, lon: -119.79, dx: 8, dy: 4 },
+                                ].map((city, i) => {
+                                    const { x, y } = latLonToXY(city.lat, city.lon);
+                                    return <text key={`label-${i}`} x={x + city.dx} y={y + city.dy} fontSize="10" fill="#1f2937" fontWeight="600">{city.name}</text>;
+                                })}
+                            </svg>
+
+                            {hoveredItem && (
+                                <div className="mt-3 p-3 bg-gray-800 text-white rounded-lg text-sm max-w-xs">
+                                    {hoveredItem.type === 'bila' ? (
+                                        <>
+                                            <div className="font-bold">{hoveredItem.data.name}</div>
+                                            <div className="text-gray-300 text-xs">{hoveredItem.data.city}</div>
+                                            <div className="text-xs mt-1 px-2 py-0.5 rounded inline-block" style={{backgroundColor: getSegmentColor(hoveredItem.data.segment)}}>{hoveredItem.data.segment}</div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="font-bold">{hoveredItem.data.city}</div>
+                                            <div className="text-orange-300 text-lg font-semibold">{hoveredItem.data.count} <span className="text-sm font-normal">DLI programs</span></div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="bg-white rounded-xl shadow-lg p-4 w-56 text-sm h-fit">
+                            <h3 className="font-bold mb-3 text-gray-800 border-b pb-2">Legend</h3>
+                            
+                            <div className="mb-4">
+                                <h4 className="font-semibold text-gray-600 mb-2 text-xs uppercase tracking-wide">BILA Programs</h4>
+                                <div className="space-y-1.5">
+                                    {[
+                                        { label: 'CSU', color: '#1e40af', count: bilaData.filter(b => b.segment === 'California State University').length },
+                                        { label: 'UC', color: '#dc2626', count: bilaData.filter(b => b.segment === 'University Of California').length },
+                                        { label: 'Private', color: '#059669', count: bilaData.filter(b => b.segment === 'Private/Independent Institution').length },
+                                        { label: 'LEA', color: '#7c3aed', count: bilaData.filter(b => b.segment === 'Local Education Agency').length },
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-center gap-2">
+                                            <svg width="16" height="16"><rect x="3" y="3" width="10" height="10" fill={item.color} stroke="white" strokeWidth="1" transform="rotate(45, 8, 8)" /></svg>
+                                            <span className="text-gray-700">{item.label}</span>
+                                            <span className="text-gray-400 ml-auto">({item.count})</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <h4 className="font-semibold text-gray-600 mb-2 text-xs uppercase tracking-wide">DLI Schools</h4>
+                                <div className="flex items-end gap-2 justify-center">
+                                    {[5, 25, 50, 100].map((count, i) => (
+                                        <div key={i} className="flex flex-col items-center">
+                                            <svg width={getDliRadius(count) * 2 + 4} height={getDliRadius(count) * 2 + 4}>
+                                                <circle cx={getDliRadius(count) + 2} cy={getDliRadius(count) + 2} r={getDliRadius(count)}
+                                                    fill="rgba(251, 146, 60, 0.75)" stroke="#9a3412" strokeWidth="1" />
+                                            </svg>
+                                            <span className="text-xs text-gray-500">{count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-3">
+                                <h4 className="font-semibold text-gray-600 mb-2 text-xs uppercase tracking-wide">Top DLI Cities</h4>
+                                <div className="space-y-1">
+                                    {dliData.slice().sort((a, b) => b.count - a.count).slice(0, 8).map((d, i) => (
+                                        <div key={i} className="flex justify-between text-xs">
+                                            <span className="text-gray-600">{d.city}</span>
+                                            <span className="text-orange-600 font-bold">{d.count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p className="text-center text-gray-500 text-xs mt-3">
+                        Data: 790 of 1,269 DLI schools mapped • Hover over markers for details
+                    </p>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<CaliforniaMap />, document.getElementById('root'));
+    </script>
+</body>
+</html>
