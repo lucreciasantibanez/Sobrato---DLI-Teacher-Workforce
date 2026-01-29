@@ -273,10 +273,10 @@
             return (
                 <div className="p-4 bg-slate-100 min-h-screen">
                     <h1 className="text-xl font-bold text-center mb-1 text-gray-800">
-                        California Bilingual Teacher Preparation & DLI Programs
+                        California Bilingual Teacher Preparation & Multilingual Programs
                     </h1>
                     <p className="text-center text-gray-600 mb-3 text-sm">
-                        {bilaData.length} BILA programs • {totalDli} DLI schools across {dliData.length} cities
+                        {bilaData.length} BILA programs • {totalDli} Multilingual schools across {dliData.length} cities
                     </p>
                     
                     <div className="flex flex-wrap gap-3 justify-center mb-4">
@@ -287,7 +287,7 @@
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" checked={showDli} onChange={(e) => setShowDli(e.target.checked)} className="w-4 h-4 accent-orange-500" />
-                                <span className="font-medium">DLI Schools</span>
+                                <span className="font-medium">Multilingual Schools</span>
                             </label>
                         </div>
                         <select value={selectedSegment} onChange={(e) => setSelectedSegment(e.target.value)} className="text-sm border rounded-lg px-3 py-2 bg-white shadow">
